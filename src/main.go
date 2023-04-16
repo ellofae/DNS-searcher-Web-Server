@@ -10,8 +10,8 @@ import (
 
 // Type data definitions
 type AddrData struct {
-	IPaddresses []string
 	HostName    string
+	IPaddresses []string
 }
 
 type DomainData struct {
@@ -19,9 +19,15 @@ type DomainData struct {
 	DomainNames []string
 }
 
+type NSData struct {
+	Domain  string
+	Servers []string
+}
+
 // Data storage variables implementations
 var AddressData = make([]AddrData, 0)
 var DomainNamesData = make([]DomainData, 0)
+var NameServersData = make([]NSData, 0)
 
 // Handle functions implementations
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -48,6 +54,10 @@ func getIP(w http.ResponseWriter, r *http.Request) {
 		addr := &AddrData{IPaddresses: IPs, HostName: hostName}
 		AddressData = append(AddressData, *addr)
 		myTemplate.Execute(w, AddressData)
+	} else {
+		addr := &AddrData{IPaddresses: []string{"no IP addresses found"}, HostName: hostName}
+		AddressData = append(AddressData, *addr)
+		myTemplate.Execute(w, AddressData)
 	}
 }
 
@@ -69,27 +79,35 @@ func getName(w http.ResponseWriter, r *http.Request) {
 		hosts := &DomainData{IPaddress: ip, DomainNames: domains}
 		DomainNamesData = append(DomainNamesData, *hosts)
 		myTemplate.Execute(w, DomainNamesData)
+	} else {
+		hosts := &DomainData{IPaddress: ip, DomainNames: []string{"no domains found"}}
+		DomainNamesData = append(DomainNamesData, *hosts)
+		myTemplate.Execute(w, DomainNamesData)
 	}
 }
 
 func getNameServers(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
-	myTemplate := template.Must(template.ParseFiles("getDomainPage.html"))
+	myTemplate := template.Must(template.ParseFiles("getNameServerPage.html"))
 
 	if r.Method != http.MethodPost {
-		myTemplate.Execute(w, DomainNamesData)
+		myTemplate.Execute(w, NameServersData)
 		return
 	}
 
-	ip := r.FormValue("ip")
+	domain := r.FormValue("domainName")
 
-	domains, err := dns.DomainProcess("", ip, 'd')
+	servers, err := dns.DomainProcess(domain, "", 'n')
 	if err == nil {
-		fmt.Printf("\n*recived Hosts: %#v\n\n", domains)
+		fmt.Printf("\n*recived domain name servers: %#v\n\n", servers)
 
-		hosts := &DomainData{IPaddress: ip, DomainNames: domains}
-		DomainNamesData = append(DomainNamesData, *hosts)
-		myTemplate.Execute(w, DomainNamesData)
+		NSs := &NSData{Domain: domain, Servers: servers}
+		NameServersData = append(NameServersData, *NSs)
+		myTemplate.Execute(w, NameServersData)
+	} else {
+		temp := &NSData{Domain: domain, Servers: []string{"no servers found"}}
+		NameServersData = append(NameServersData, *temp)
+		myTemplate.Execute(w, NameServersData)
 	}
 }
 
