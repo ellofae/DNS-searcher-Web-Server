@@ -2,10 +2,19 @@ package main
 
 import (
 	dns "dns/main/domainProcess"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
+)
+
+const (
+	DATAFILE1 string = "/tmp/domain-name-server-data.json"
+	DATAFILE2 string = "/tmp/mail-server-data.json"
+	DATAFILE3 string = "/tmp/domain-name-data.json"
+	DATAFILE4 string = "/tmp/ip-address-data.json"
 )
 
 // Type data definitions
@@ -35,6 +44,71 @@ var DomainNamesData = make([]DomainData, 0)
 var NameServersData = make([]NSData, 0)
 var MailServersData = make([]MXData, 0)
 
+// Saving and loading data
+func saveData(DATA string, SomeStruct interface{}) error {
+	fmt.Println("Saving", DATA)
+	err := os.Remove(DATA)
+	if err != nil {
+		log.Println(err)
+	}
+
+	saveTo, err := os.Create(DATA)
+	if err != nil {
+		log.Println("Didn't manage to create", DATA)
+		return err
+	}
+	defer saveTo.Close()
+
+	encoder := json.NewEncoder(saveTo)
+	err = encoder.Encode(SomeStruct)
+	if err != nil {
+		log.Println("Didn't manage to save to", DATA)
+		return err
+	}
+	return nil
+}
+
+func loadData(DATA string, SomeStruct interface{}) error {
+	fmt.Println("Loading", DATA)
+	loadFrom, err := os.Open(DATA)
+	if err != nil {
+		log.Println("No records have been found")
+		return err
+	}
+	defer loadFrom.Close()
+
+	decoder := json.NewDecoder(loadFrom)
+	decoder.Decode(&SomeStruct)
+	return nil
+}
+
+func loadAllData() error {
+	var err error
+
+	err = loadData(DATAFILE1, &NameServersData)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = loadData(DATAFILE2, &MailServersData)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = loadData(DATAFILE3, &DomainNamesData)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = loadData(DATAFILE4, &AddressData)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("\nLoading is completed!\n\n")
+
+	return nil
+}
+
 // Handle functions implementations
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
@@ -59,6 +133,13 @@ func getIP(w http.ResponseWriter, r *http.Request) {
 
 		addr := &AddrData{IPaddresses: IPs, HostName: hostName}
 		AddressData = append(AddressData, *addr)
+
+		err := saveData(DATAFILE4, AddressData)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		myTemplate.Execute(w, AddressData)
 	} else {
 		addr := &AddrData{IPaddresses: []string{"no IP addresses found"}, HostName: hostName}
@@ -84,6 +165,13 @@ func getName(w http.ResponseWriter, r *http.Request) {
 
 		hosts := &DomainData{IPaddress: ip, DomainNames: domains}
 		DomainNamesData = append(DomainNamesData, *hosts)
+
+		err := saveData(DATAFILE3, DomainNamesData)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		myTemplate.Execute(w, DomainNamesData)
 	} else {
 		hosts := &DomainData{IPaddress: ip, DomainNames: []string{"no domains found"}}
@@ -109,6 +197,13 @@ func getNameServers(w http.ResponseWriter, r *http.Request) {
 
 		NSs := &NSData{Domain: domain, Servers: servers}
 		NameServersData = append(NameServersData, *NSs)
+
+		err := saveData(DATAFILE1, NameServersData)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		myTemplate.Execute(w, NameServersData)
 	} else {
 		temp := &NSData{Domain: domain, Servers: []string{"no servers found"}}
@@ -134,15 +229,29 @@ func getMailServers(w http.ResponseWriter, r *http.Request) {
 
 		MXs := &MXData{Domain: domain, Servers: servers}
 		MailServersData = append(MailServersData, *MXs)
+
+		err := saveData(DATAFILE2, MailServersData)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		myTemplate.Execute(w, MailServersData)
 	} else {
 		temp := &MXData{Domain: domain, Servers: []string{"no servers found"}}
 		MailServersData = append(MailServersData, *temp)
 		myTemplate.Execute(w, MailServersData)
 	}
+
 }
 
 func main() {
+	err := loadAllData()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
 	PORT := ":8080"
 	arguments := os.Args
 	if len(arguments) == 1 {
@@ -157,10 +266,9 @@ func main() {
 	http.HandleFunc("/nameServers", getNameServers)
 	http.HandleFunc("/mailServers", getMailServers)
 
-	err := http.ListenAndServe(PORT, nil)
+	err = http.ListenAndServe(PORT, nil)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
 }
