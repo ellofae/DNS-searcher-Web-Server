@@ -24,10 +24,16 @@ type NSData struct {
 	Servers []string
 }
 
+type MXData struct {
+	Domain  string
+	Servers []string
+}
+
 // Data storage variables implementations
 var AddressData = make([]AddrData, 0)
 var DomainNamesData = make([]DomainData, 0)
 var NameServersData = make([]NSData, 0)
+var MailServersData = make([]MXData, 0)
 
 // Handle functions implementations
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +117,31 @@ func getNameServers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getMailServers(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
+	myTemplate := template.Must(template.ParseFiles("getMailServerPage.html"))
+
+	if r.Method != http.MethodPost {
+		myTemplate.Execute(w, MailServersData)
+		return
+	}
+
+	domain := r.FormValue("domainName")
+
+	servers, err := dns.DomainProcess(domain, "", 'm')
+	if err == nil {
+		fmt.Printf("\n*recived mail servers: %#v\n\n", servers)
+
+		MXs := &MXData{Domain: domain, Servers: servers}
+		MailServersData = append(MailServersData, *MXs)
+		myTemplate.Execute(w, MailServersData)
+	} else {
+		temp := &MXData{Domain: domain, Servers: []string{"no servers found"}}
+		MailServersData = append(MailServersData, *temp)
+		myTemplate.Execute(w, MailServersData)
+	}
+}
+
 func main() {
 	PORT := ":8080"
 	arguments := os.Args
@@ -124,6 +155,7 @@ func main() {
 	http.HandleFunc("/getIP", getIP)
 	http.HandleFunc("/getName", getName)
 	http.HandleFunc("/nameServers", getNameServers)
+	http.HandleFunc("/mailServers", getMailServers)
 
 	err := http.ListenAndServe(PORT, nil)
 	if err != nil {
