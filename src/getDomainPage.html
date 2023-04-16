@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Web-server for DNS protocol usage</title>
+	<style>
+		html {
+		font-size: 14px;
+		}
+		table, th, td {
+		border: 2px solid blue;
+		}
+		</style>
+</head>
+<body>
+
+<a href="/" style="margin:15px;">Home page</a>
+<a href="/getIP" style="margin:15px;">Map domain name to IP</a>
+<a href="/getName" style="margin:15px;">Map IP to domain name</a>
+<a href="/nameServers" style="margin:15px;">Find domain name servers</a>
+<a href="/mailServers" style="margin:15px;">Find mail servers</a>
+
+</br></br>
+<h3>Type in IP address to get the domain name that maps to this address:</h3>
+
+<form method="POST">
+	<label>IP address:</label><br/>
+	<input type="text" name="ip"><br/>
+	<input type="submit">
+</form>
+
+<table style="margin-top: 40px;">
+	<thead>
+		<tr>
+			<th>IP Address</th>
+			<th>Host name mapped</th>
+		</tr>
+	</thead>
+	<tbody>
+		{{ range . }}
+		<tr>
+			<td>{{ .IPaddress }}</td>
+			<td>{{ .DomainNames }}</td>
+		</tr>
+		{{ end }}
+	</tbody>
+</table>
+
+
+</body>
+</html>

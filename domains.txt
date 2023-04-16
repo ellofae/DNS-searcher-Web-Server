@@ -1,0 +1,5 @@
+www.google.com
+www.github.com
+www.cnn.com
+www.kubernetes.io
+www.amazon.com
