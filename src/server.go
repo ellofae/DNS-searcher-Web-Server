@@ -104,19 +104,19 @@ func loadAllData() error {
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("\nLoading is completed!\n\n")
+	fmt.Printf("\nLoading is completed!\n\n")
 
 	return nil
 }
 
 // Handle functions implementations
-func homePage(w http.ResponseWriter, r *http.Request) {
+func HomePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
 	myTemplate := template.Must(template.ParseGlob("homePage.html"))
 	myTemplate.ExecuteTemplate(w, "homePage.html", nil)
 }
 
-func getIP(w http.ResponseWriter, r *http.Request) {
+func GetIP(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
 	myTemplate := template.Must(template.ParseFiles("getAddrPage.html"))
 
@@ -148,7 +148,7 @@ func getIP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getName(w http.ResponseWriter, r *http.Request) {
+func GetName(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
 	myTemplate := template.Must(template.ParseFiles("getDomainPage.html"))
 
@@ -180,7 +180,7 @@ func getName(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getNameServers(w http.ResponseWriter, r *http.Request) {
+func GetNameServers(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
 	myTemplate := template.Must(template.ParseFiles("getNameServerPage.html"))
 
@@ -212,7 +212,7 @@ func getNameServers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getMailServers(w http.ResponseWriter, r *http.Request) {
+func GetMailServers(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Serving %s for %s\n", r.Host, r.URL.Path)
 	myTemplate := template.Must(template.ParseFiles("getMailServerPage.html"))
 
@@ -260,11 +260,11 @@ func main() {
 		PORT = ":" + arguments[1]
 	}
 
-	http.HandleFunc("/", homePage)
-	http.HandleFunc("/getIP", getIP)
-	http.HandleFunc("/getName", getName)
-	http.HandleFunc("/nameServers", getNameServers)
-	http.HandleFunc("/mailServers", getMailServers)
+	http.HandleFunc("/", HomePage)
+	http.HandleFunc("/getIP", GetIP)
+	http.HandleFunc("/getName", GetName)
+	http.HandleFunc("/nameServers", GetNameServers)
+	http.HandleFunc("/mailServers", GetMailServers)
 
 	err = http.ListenAndServe(PORT, nil)
 	if err != nil {
