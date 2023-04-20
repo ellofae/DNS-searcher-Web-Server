@@ -46,6 +46,7 @@ var NameServersData = make([]NSData, 0)
 var MailServersData = make([]MXData, 0)
 
 var serverTimeout = time.Duration(time.Second)
+var clientTimeout = time.Duration(time.Second)
 
 // Saving and loading data
 func saveData(DATA string, SomeStruct interface{}) error {
