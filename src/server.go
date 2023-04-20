@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 const (
@@ -43,6 +44,8 @@ var AddressData = make([]AddrData, 0)
 var DomainNamesData = make([]DomainData, 0)
 var NameServersData = make([]NSData, 0)
 var MailServersData = make([]MXData, 0)
+
+var serverTimeout = time.Duration(time.Second)
 
 // Saving and loading data
 func saveData(DATA string, SomeStruct interface{}) error {
@@ -260,13 +263,21 @@ func main() {
 		PORT = ":" + arguments[1]
 	}
 
-	http.HandleFunc("/", HomePage)
-	http.HandleFunc("/getIP", GetIP)
-	http.HandleFunc("/getName", GetName)
-	http.HandleFunc("/nameServers", GetNameServers)
-	http.HandleFunc("/mailServers", GetMailServers)
+	ep := http.NewServeMux()
+	srv := &http.Server{
+		Addr:         PORT,
+		Handler:      ep,
+		ReadTimeout:  serverTimeout,
+		WriteTimeout: serverTimeout,
+	}
 
-	err = http.ListenAndServe(PORT, nil)
+	ep.HandleFunc("/", HomePage)
+	ep.HandleFunc("/getIP", GetIP)
+	ep.HandleFunc("/getName", GetName)
+	ep.HandleFunc("/nameServers", GetNameServers)
+	ep.HandleFunc("/mailServers", GetMailServers)
+
+	err = srv.ListenAndServe()
 	if err != nil {
 		fmt.Println(err)
 		return
