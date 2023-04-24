@@ -1,7 +1,3 @@
-module dns/main
+module github.com/ellofae/DNS-searcher-Web-Server/src
 
 go 1.20
-
-replace dns/main/domainProcess => ./domainProcess
-
-require dns/main/domainProcess v0.0.0-00010101000000-000000000000 // indirect
